@@ -18,6 +18,7 @@ public:
     void drawRectangle(const Point2D<size_t>& topLeft,
                        const Dimension2D<size_t>& size,
                        uint32_t color);
+    const std::vector<uint32_t>& getImage() const;
 
     std::vector<uint32_t>::const_iterator begin() const;
     std::vector<uint32_t>::const_iterator end() const;

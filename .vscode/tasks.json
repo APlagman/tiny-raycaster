@@ -7,37 +7,28 @@
             "label": "build raytrace",
             "type": "shell",
             "options": {
-                "cwd": "${workspaceFolder}/src"
+                "cwd": "${workspaceFolder}/build"
             },
-            "command": "g++",
-            "args": [
-                "-o", "${workspaceFolder}/dist/raytrace",
-                "-g",
-                "-ggdb",
-                "-O0",
-                "-std=c++17",
-                "-pedantic",
-                "-Werror",
-                "-Wall",
-                "-Wextra",
-                "-Wfloat-equal",
-                "-Wshadow",
-                "-Wcast-qual",
-                "-Wcast-align",
-                "-Wlogical-op",
-                "-Wmissing-noreturn",
-                "-Wredundant-decls",
-                "-Winline",
-                "-Winvalid-pch",
-                "-Wmissing-include-dirs",
-                "-Winit-self",
-                "*.cpp",
-                "-I.", "-I${workspaceFolder}/third_party/stb"
-            ],
+            "command": "make",
+            "args": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
+            "dependsOn": []
+        },
+        {
+            "label": "cmake raytrace",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            },
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "../build"
+            ],
+            "group": "build",
             "dependsOn": [
                 "format src"
             ]

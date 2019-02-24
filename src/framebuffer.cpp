@@ -45,6 +45,11 @@ void FrameBuffer::drawRectangle(const Point2D<size_t>& topLeft,
     }
 }
 
+const std::vector<uint32_t>& FrameBuffer::getImage() const
+{
+    return mImage;
+}
+
 std::vector<uint32_t>::const_iterator FrameBuffer::begin() const
 {
     return mImage.begin();

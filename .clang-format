@@ -61,7 +61,7 @@ ForEachMacros:
   - BOOST_FOREACH
 IncludeBlocks:   Regroup
 IncludeCategories: 
-  - Regex:           '^"stb'
+  - Regex:           '^"(stb|SDL)'
     Priority:        2
   - Regex:           '^(<|"(gtest|gmock|isl|json)/)'
     Priority:        3

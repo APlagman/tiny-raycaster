@@ -1,3 +1,4 @@
-*.ppm
+*.ppm*
+build/
 dist/
-third_party
+third_party/
