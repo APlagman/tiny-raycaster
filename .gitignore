@@ -1,3 +1,3 @@
 *.ppm
-raytrace
-stb_*
+dist/
+third_party

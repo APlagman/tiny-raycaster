@@ -6,16 +6,20 @@
         {
             "label": "build raytrace",
             "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            },
             "command": "g++",
             "args": [
-                "-o raytrace",
+                "-o ${workspaceFolder}/dist/raytrace",
                 "-g",
                 "-std=c++17",
                 "-Werror",
                 "-Wpedantic",
                 "-Wall",
                 "-Wextra",
-                "*.cpp"
+                "*.cpp",
+                "-I${workspaceFolder}/third_party/stb"
             ],
             "group": {
                 "kind": "build",
