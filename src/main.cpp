@@ -19,7 +19,7 @@ Dimension2D<size_t> getTileSize(const FrameBuffer& fb, const Map& map)
             fb.getHeight() / map.getHeight()};
 }
 
-void drawSprite(const Sprite& sprite, FrameBuffer& fb, const Map& map)
+void drawSpriteOnMap(const Sprite& sprite, FrameBuffer& fb, const Map& map)
 {
     const Dimension2D<size_t> tileSize = getTileSize(fb, map);
     const Point2D<size_t> origin = {
@@ -30,12 +30,59 @@ void drawSprite(const Sprite& sprite, FrameBuffer& fb, const Map& map)
                      packColor({255, 0, 0, 255}));
 }
 
+void drawSprite(const Sprite& sprite,
+                FrameBuffer& fb,
+                const Player& player,
+                const TextureSet& spriteTextures)
+{
+    float spriteDirection = std::atan2(sprite.getY() - player.getY(),
+                                       sprite.getX() - player.getX());
+    // get within [-M_PI, M_PI]
+    while (spriteDirection - player.getAngle() > M_PI) {
+        spriteDirection -= 2 * M_PI;
+    }
+    while (spriteDirection - player.getAngle() < -M_PI) {
+        spriteDirection += 2 * M_PI;
+    }
+
+    const float distanceToSprite =
+        std::sqrt(std::pow(player.getX() - sprite.getX(), 2)
+                  + std::pow(player.getY() - sprite.getY(), 2));
+    const size_t spriteScreenHeight = static_cast<size_t>(
+        std::min(1000, static_cast<int>(fb.getHeight() / distanceToSprite)));
+    const float percentAlongFOV =
+        (spriteDirection - player.getAngle()) / player.getFieldOfView();
+    const size_t halfOfViewWidth = (fb.getWidth() / 2) / 2;
+    const int leftSideOfTexture =
+        halfOfViewWidth - spriteTextures.getTextureWidth() / 2;
+    const Point2D<int> topLeftOfTexture{
+        static_cast<int>(percentAlongFOV * (fb.getWidth() / 2))
+            + leftSideOfTexture,
+        static_cast<int>(fb.getHeight() / 2 - spriteScreenHeight / 2)};
+
+    for (size_t col = 0; col < spriteScreenHeight; ++col) {
+        const int x = topLeftOfTexture.x + static_cast<int>(col);
+        if (x < 0 || x >= static_cast<int>(fb.getWidth() / 2)) {
+            continue;
+        }
+        for (size_t row = 0; row < spriteScreenHeight; ++row) {
+            const int y = topLeftOfTexture.y + static_cast<int>(row);
+            if (y < 0 || y >= static_cast<int>(fb.getHeight())) {
+                continue;
+            }
+            fb.setPixel({fb.getWidth() / 2 + static_cast<size_t>(x),
+                         static_cast<size_t>(y)},
+                        packColor(RGBA::black()));
+        }
+    }
+}
+
 void render(FrameBuffer& fb,
             const Map& map,
             const Player& player,
             const std::vector<Sprite>& sprites,
             const TextureSet& wallTextures,
-            const TextureSet& /* monsterTextures */)
+            const TextureSet& monsterTextures)
 {
     const Dimension2D<size_t> tileSize = getTileSize(fb, map);
 
@@ -63,33 +110,36 @@ void render(FrameBuffer& fb,
 
         // Ray march
         for (float t = 0; t < 20; t += 0.01) {
-            const Point2D<float> along = {player.getX() + t * std::cos(angle),
-                                          player.getY() + t * std::sin(angle)};
+            const Point2D<float> pointAlongRay = {
+                player.getX() + t * std::cos(angle),
+                player.getY() + t * std::sin(angle)};
 
-            const Point2D<size_t> mapPos = {static_cast<size_t>(along.x),
-                                            static_cast<size_t>(along.y)};
+            const Point2D<size_t> nearestTileOnMap = {
+                static_cast<size_t>(pointAlongRay.x),
+                static_cast<size_t>(pointAlongRay.y)};
 
             // Draw the ray
-            const Point2D<size_t> nearest = {
-                static_cast<size_t>(mapPos.x * tileSize.width),
-                static_cast<size_t>(mapPos.y * tileSize.height)};
-            fb.setPixel(nearest, packColor({160, 160, 160, 255}));
+            const Point2D<size_t> nearestPixel = {
+                static_cast<size_t>(nearestTileOnMap.x * tileSize.width),
+                static_cast<size_t>(nearestTileOnMap.y * tileSize.height)};
+            fb.setPixel(nearestPixel, packColor({160, 160, 160, 255}));
 
-            if (map.isEmpty(mapPos)) {
+            if (map.isEmpty(nearestTileOnMap)) {
                 continue;
             }
 
             // Draw the wall
-            const size_t textureID = map.get(mapPos);
+            const size_t textureID = map.get(nearestTileOnMap);
             assert(textureID < wallTextures.getCount());
 
             const float dist = t * std::cos(angle - player.getAngle());
             const auto columnHeight =
                 static_cast<size_t>(fb.getHeight() / dist);
 
-            // Find the fractional distance along the tile we hit
+            // Find the fractional offset from the top left of the tile we hit
             const Point2D<float> mapTileOffset = {
-                along.x - std::round(along.x), along.y - std::round(along.y)};
+                pointAlongRay.x - std::round(pointAlongRay.x),
+                pointAlongRay.y - std::round(pointAlongRay.y)};
             // Multiply by the texture width to get the offset within the
             // texture for that tile
             auto textureXOffset = static_cast<int>(
@@ -109,7 +159,7 @@ void render(FrameBuffer& fb,
                           < static_cast<int>(wallTextures.getTextureWidth()));
 
             // Load the column texture
-            std::vector<uint32_t> column = wallTextures.getScaledColumn(
+            const std::vector<uint32_t> column = wallTextures.getScaledColumn(
                 textureID, static_cast<size_t>(textureXOffset), columnHeight);
 
             // Draw the column
@@ -124,8 +174,9 @@ void render(FrameBuffer& fb,
         }
     }
 
-    for (size_t i = 0; i < sprites.size(); i++) {
-        drawSprite(sprites[i], fb, map);
+    for (const Sprite& sprite : sprites) {
+        drawSpriteOnMap(sprite, fb, map);
+        drawSprite(sprite, fb, player, monsterTextures);
     }
 }
 
@@ -139,8 +190,8 @@ int main()
 
     Map map;
 
-    TextureSet wallTextures("../content/walltext.png");
-    TextureSet monsterTextures("../content/monsters.png");
+    TextureSet wallTextures("content/walltext.png");
+    TextureSet monsterTextures("content/monsters.png");
     if (0 == wallTextures.getCount() || 0 == monsterTextures.getCount()) {
         std::cerr << "Failed to load textures" << std::endl;
         return -1;
