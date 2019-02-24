@@ -18,7 +18,7 @@ int main()
     FrameBuffer fb(std::move(windowSize));
     fb.clear(packColor(RGBA::white()));
 
-    Player player({3.456, 2.345}, 1.523, M_PI / 3.0);
+    Player player({3.456f, 2.345f}, 1.523f, M_PIf32 / 3.0f);
     Map map;
     TextureSet wallTextures("content/walltext.png");
     TextureSet monsterTextures("content/monsters.png");
@@ -26,12 +26,10 @@ int main()
         std::cerr << "Failed to load textures" << std::endl;
         return -1;
     }
-    std::vector<Sprite> sprites{{{3.523, 3.812}, 2},
-                                {{1.834, 8.765}, 0},
-                                {{5.323, 5.365}, 1},
-                                {{4.123, 10.265}, 1}};
-
-    render(fb, map, player, sprites, wallTextures, monsterTextures);
+    std::vector<Sprite> sprites{{{3.523f, 3.812f}, 2},
+                                {{1.834f, 8.765f}, 0},
+                                {{5.323f, 5.365f}, 1},
+                                {{4.123f, 10.265f}, 1}};
 
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
@@ -56,17 +54,80 @@ int main()
                           SDL_TEXTUREACCESS_STREAMING,
                           fb.getWidth(),
                           fb.getHeight());
-    SDL_UpdateTexture(frameBufferTexture,
-                      NULL,
-                      reinterpret_cast<const void*>(fb.getImage().data()),
-                      fb.getWidth() * 4);
 
     SDL_Event event;
     while (true) {
-        SDL_PollEvent(&event);
-        if (event.type == SDL_QUIT) {
-            break;
+        if (SDL_PollEvent(&event)) {
+            if (SDL_QUIT == event.type
+                || (SDL_KEYDOWN == event.type
+                    && SDLK_ESCAPE == event.key.keysym.sym)) {
+                break;
+            }
+            if (SDL_KEYUP == event.type) {
+                switch (event.key.keysym.sym) {
+                    case 'a':
+                    case 'd':
+                        player.setTurningDirection(Direction::None);
+                        break;
+                    case 'w':
+                    case 's':
+                        player.setWalkingDirection(Direction::None);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if (SDL_KEYDOWN == event.type) {
+                switch (event.key.keysym.sym) {
+                    case 'a':
+                        player.setTurningDirection(Direction::Left);
+                        break;
+                    case 'd':
+                        player.setTurningDirection(Direction::Right);
+                        break;
+                    case 'w':
+                        player.setWalkingDirection(Direction::Forward);
+                        break;
+                    case 's':
+                        player.setWalkingDirection(Direction::Backward);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
+
+        player.setAngle(player.getAngle()
+                        + static_cast<float>(player.getTurningDirection())
+                              * 0.05f);
+        const Point2D<float> newPlayerPos = {
+            player.getX()
+                + static_cast<float>(player.getWalkingDirection())
+                      * std::cos(player.getAngle()) * 0.1f,
+            player.getY()
+                + static_cast<float>(player.getWalkingDirection())
+                      * std::sin(player.getAngle()) * 0.1f};
+        const Point2D<float> playerRectTopLeft =
+            newPlayerPos - Point2D<float>{0.1f, 0.1f};
+
+        if (newPlayerPos.x >= 0 && newPlayerPos.y < map.getWidth()
+            && newPlayerPos.y >= 0 && newPlayerPos.y < map.getHeight()
+            && map.isEmpty(cast<float, size_t>(playerRectTopLeft))
+            && map.isEmpty(cast<float, size_t>(playerRectTopLeft
+                                               + Point2D<float>{0.2f, 0.0f}))
+            && map.isEmpty(cast<float, size_t>(playerRectTopLeft
+                                               + Point2D<float>{0.0f, 0.2f}))
+            && map.isEmpty(cast<float, size_t>(playerRectTopLeft
+                                               + Point2D<float>{0.2f, 0.2f}))) {
+            player.setX(newPlayerPos.x);
+            player.setY(newPlayerPos.y);
+        }
+
+        render(fb, map, player, sprites, wallTextures, monsterTextures);
+        SDL_UpdateTexture(frameBufferTexture,
+                          NULL,
+                          reinterpret_cast<const void*>(fb.getImage().data()),
+                          fb.getWidth() * 4);
 
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, frameBufferTexture, NULL, NULL);

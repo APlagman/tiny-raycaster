@@ -1,5 +1,6 @@
 #pragma once
 
+#include "direction.h"
 #include "point2D.h"
 
 class Player
@@ -14,9 +15,15 @@ public:
     float getAngle() const;
     void setAngle(float value);
     float getFieldOfView() const;
+    Direction getWalkingDirection() const;
+    void setWalkingDirection(Direction value);
+    Direction getTurningDirection() const;
+    void setTurningDirection(Direction value);
 
 private:
     Point2D<float> mPosition;
     float mAngle;
     float mFieldOfView;
+    Direction mTurning = Direction::None;
+    Direction mWalking = Direction::None;
 };

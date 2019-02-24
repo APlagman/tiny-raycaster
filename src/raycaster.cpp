@@ -55,7 +55,7 @@ namespace
             1000, static_cast<int>(fb.getHeight() / distanceToSprite)));
         const size_t spriteScreenWidth = spriteScreenHeight;
         const float percentAlongFOV =
-            (spriteDirection - player.getAngle()) / player.getFieldOfView();
+            (spriteDirection - player.getAngle());
         const size_t halfOfViewWidth = (fb.getWidth() / 2) / 2;
         const int leftSideOfTexture =
             halfOfViewWidth - spriteTextures.getTextureWidth() / 2;
@@ -111,6 +111,7 @@ void render(FrameBuffer& fb,
             const TextureSet& wallTextures,
             const TextureSet& monsterTextures)
 {
+    fb.clear(packColor(RGBA::white()));
     const Dimension2D<size_t> tileSize = getTileSize(fb, map);
 
     // Draw the map
@@ -129,7 +130,7 @@ void render(FrameBuffer& fb,
         }
     }
 
-    std::vector<float> depthBuffer(fb.getWidth() / 2 * fb.getHeight(), 1e3);
+    std::vector<float> depthBuffer(fb.getWidth() / 2 * fb.getHeight(), 1e3f);
     // Field of view sweep
     for (size_t i = 0; i < fb.getWidth() / 2; ++i) {
         const float angle = (player.getAngle() - (player.getFieldOfView() / 2))
@@ -137,7 +138,7 @@ void render(FrameBuffer& fb,
                                   * (i / static_cast<float>(fb.getWidth() / 2));
 
         // Ray march
-        for (float t = 0; t < 20; t += 0.01) {
+        for (float t = 0; t < 20; t += 0.01f) {
             const Point2D<float> pointAlongRay = {
                 player.getX() + t * std::cos(angle),
                 player.getY() + t * std::sin(angle)};
@@ -160,7 +161,7 @@ void render(FrameBuffer& fb,
             const size_t textureID = map.get(nearestTileOnMap);
             assert(textureID < wallTextures.getCount());
 
-            const float distance = t * std::cos(angle - player.getAngle());
+            const float distance = 0.2f + t * std::cos(angle - player.getAngle());
             for (size_t y = 0; y < fb.getHeight(); ++y) {
                 depthBuffer[i + y * (fb.getWidth() / 2)] = distance;
             }

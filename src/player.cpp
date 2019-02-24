@@ -44,3 +44,23 @@ float Player::getFieldOfView() const
 {
     return mFieldOfView;
 }
+
+Direction Player::getWalkingDirection() const
+{
+    return mWalking;
+}
+
+void Player::setWalkingDirection(Direction value)
+{
+    mWalking = value;
+}
+
+Direction Player::getTurningDirection() const
+{
+    return mTurning;
+}
+
+void Player::setTurningDirection(Direction value)
+{
+    mTurning = value;
+}
