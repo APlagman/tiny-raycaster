@@ -16,7 +16,8 @@ public:
     size_t getTextureWidth() const;
     size_t getTextureHeight() const;
     uint32_t get(const Point2D<size_t>& point, size_t id) const;
-    std::vector<uint32_t> getScaledColumn(size_t id, size_t xCoordinate,
+    std::vector<uint32_t> getScaledColumn(size_t id,
+                                          size_t xCoordinate,
                                           size_t height) const;
 
 private:

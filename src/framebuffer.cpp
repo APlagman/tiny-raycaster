@@ -32,7 +32,8 @@ void FrameBuffer::setPixel(const Point2D<size_t>& pixel, uint32_t color)
 }
 
 void FrameBuffer::drawRectangle(const Point2D<size_t>& topLeft,
-                                const Dimension2D<size_t>& size, uint32_t color)
+                                const Dimension2D<size_t>& size,
+                                uint32_t color)
 {
     for (size_t x = 0; x < size.width; ++x) {
         for (size_t y = 0; y < size.height; ++y) {

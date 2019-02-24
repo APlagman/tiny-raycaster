@@ -2,6 +2,7 @@
 #include "map.h"
 #include "player.h"
 #include "rgba.h"
+#include "sprite.h"
 #include "textures.h"
 #include "utils.h"
 
@@ -12,11 +13,31 @@
 #include <sstream>
 #include <vector>
 
-void render(FrameBuffer& fb, const Map& map, const Player& player,
-            const TextureSet& wallTextures)
+Dimension2D<size_t> getTileSize(const FrameBuffer& fb, const Map& map)
 {
-    const Dimension2D<size_t> tileSize = {(fb.getWidth() / 2) / map.getWidth(),
-                                          fb.getHeight() / map.getHeight()};
+    return {(fb.getWidth() / 2) / map.getWidth(),
+            fb.getHeight() / map.getHeight()};
+}
+
+void drawSprite(const Sprite& sprite, FrameBuffer& fb, const Map& map)
+{
+    const Dimension2D<size_t> tileSize = getTileSize(fb, map);
+    const Point2D<size_t> origin = {
+        static_cast<size_t>(sprite.getX() * tileSize.width),
+        static_cast<size_t>(sprite.getY() * tileSize.height)};
+    fb.drawRectangle({origin.x - 3, origin.y - 3},
+                     {6, 6},
+                     packColor({255, 0, 0, 255}));
+}
+
+void render(FrameBuffer& fb,
+            const Map& map,
+            const Player& player,
+            const std::vector<Sprite>& sprites,
+            const TextureSet& wallTextures,
+            const TextureSet& /* monsterTextures */)
+{
+    const Dimension2D<size_t> tileSize = getTileSize(fb, map);
 
     // Draw the map
     for (size_t row = 0; row < map.getHeight(); ++row) {
@@ -28,7 +49,8 @@ void render(FrameBuffer& fb, const Map& map, const Player& player,
                                              row * tileSize.height};
             const size_t textureID = map.get({col, row});
             assert(textureID < wallTextures.getCount());
-            fb.drawRectangle(topLeft, tileSize,
+            fb.drawRectangle(topLeft,
+                             tileSize,
                              wallTextures.get({0, 0}, textureID));
         }
     }
@@ -53,52 +75,57 @@ void render(FrameBuffer& fb, const Map& map, const Player& player,
                 static_cast<size_t>(mapPos.y * tileSize.height)};
             fb.setPixel(nearest, packColor({160, 160, 160, 255}));
 
-            if (!map.isEmpty(mapPos)) {
-                // Draw the wall
-                const size_t textureID = map.get(mapPos);
-                assert(textureID < wallTextures.getCount());
-
-                const size_t columnHeight =
-                    fb.getHeight() / (t * std::cos(angle - player.getAngle()));
-
-                // Find the fractional distance along the tile we hit
-                const Point2D<float> mapTileOffset = {
-                    along.x - std::round(along.x),
-                    along.y - std::round(along.y)};
-                // Multiply by the texture width to get the offset within the
-                // texture for that tile
-                int textureXOffset = static_cast<int>(
-                    mapTileOffset.x * wallTextures.getTextureWidth());
-                if (std::abs(mapTileOffset.y) > std::abs(mapTileOffset.x)) {
-                    // Assume we hit a vertical wall (in the map)
-                    textureXOffset = static_cast<int>(
-                        mapTileOffset.y * wallTextures.getTextureWidth());
-                }
-                if (textureXOffset < 0) {
-                    // If we're more than halfway right (horizontal) or down
-                    // (vertical), mapTileOffset would have been negative.
-                    textureXOffset += wallTextures.getTextureWidth();
-                }
-                assert(textureXOffset >= 0
-                       && textureXOffset < static_cast<int>(
-                                               wallTextures.getTextureWidth()));
-
-                // Load the column texture
-                std::vector<uint32_t> column = wallTextures.getScaledColumn(
-                    textureID, static_cast<size_t>(textureXOffset),
-                    columnHeight);
-
-                // Draw the column
-                Point2D<size_t> pixel = {fb.getWidth() / 2 + i, 0};
-                for (size_t y = 0; y < columnHeight; ++y) {
-                    pixel.y = y + fb.getHeight() / 2 - columnHeight / 2;
-                    if (pixel.y < fb.getHeight()) {
-                        fb.setPixel(pixel, column[y]);
-                    }
-                }
-                break;
+            if (map.isEmpty(mapPos)) {
+                continue;
             }
+
+            // Draw the wall
+            const size_t textureID = map.get(mapPos);
+            assert(textureID < wallTextures.getCount());
+
+            const float dist = t * std::cos(angle - player.getAngle());
+            const auto columnHeight =
+                static_cast<size_t>(fb.getHeight() / dist);
+
+            // Find the fractional distance along the tile we hit
+            const Point2D<float> mapTileOffset = {
+                along.x - std::round(along.x), along.y - std::round(along.y)};
+            // Multiply by the texture width to get the offset within the
+            // texture for that tile
+            auto textureXOffset = static_cast<int>(
+                mapTileOffset.x * wallTextures.getTextureWidth());
+            if (std::abs(mapTileOffset.y) > std::abs(mapTileOffset.x)) {
+                // Assume we hit a vertical wall (in the map)
+                textureXOffset = static_cast<int>(
+                    mapTileOffset.y * wallTextures.getTextureWidth());
+            }
+            if (textureXOffset < 0) {
+                // If we're more than halfway right (horizontal) or down
+                // (vertical), mapTileOffset would have been negative.
+                textureXOffset += wallTextures.getTextureWidth();
+            }
+            assert(textureXOffset >= 0
+                   && textureXOffset
+                          < static_cast<int>(wallTextures.getTextureWidth()));
+
+            // Load the column texture
+            std::vector<uint32_t> column = wallTextures.getScaledColumn(
+                textureID, static_cast<size_t>(textureXOffset), columnHeight);
+
+            // Draw the column
+            Point2D<size_t> pixel = {fb.getWidth() / 2 + i, 0};
+            for (size_t y = 0; y < columnHeight; ++y) {
+                pixel.y = y + fb.getHeight() / 2 - columnHeight / 2;
+                if (pixel.y < fb.getHeight()) {
+                    fb.setPixel(pixel, column[y]);
+                }
+            }
+            break;
         }
+    }
+
+    for (size_t i = 0; i < sprites.size(); i++) {
+        drawSprite(sprites[i], fb, map);
     }
 }
 
@@ -113,19 +140,17 @@ int main()
     Map map;
 
     TextureSet wallTextures("../content/walltext.png");
-    if (wallTextures.getCount() == 0) {
-        std::cerr << "Failed to load wall textures" << std::endl;
+    TextureSet monsterTextures("../content/monsters.png");
+    if (0 == wallTextures.getCount() || 0 == monsterTextures.getCount()) {
+        std::cerr << "Failed to load textures" << std::endl;
         return -1;
     }
+    std::vector<Sprite> sprites{{{1.834, 8.765}, 0},
+                                {{5.323, 5.365}, 1},
+                                {{4.123, 10.265}, 1}};
 
-    for (size_t frame = 0; frame < 360; ++frame) {
-        std::stringstream ss;
-        ss << std::setfill('0') << std::setw(5) << frame << ".ppm";
-        player.setAngle(player.getAngle() + 2 * M_PI / 360);
-
-        render(fb, map, player, wallTextures);
-        writePPMImage(ss.str(), fb);
-    }
+    render(fb, map, player, sprites, wallTextures, monsterTextures);
+    writePPMImage("./out.ppm", fb);
 
     return 0;
 }

@@ -3,8 +3,11 @@
 #include "rgba.h"
 #include "utils.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#pragma GCC diagnostic pop
 
 #include <cassert>
 #include <iostream>

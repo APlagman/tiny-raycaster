@@ -16,16 +16,46 @@
                 "-ggdb",
                 "-O0",
                 "-std=c++17",
+                "-pedantic",
                 "-Werror",
-                "-Wpedantic",
                 "-Wall",
                 "-Wextra",
+                "-Wfloat-equal",
+                "-Wshadow",
+                "-Wcast-qual",
+                "-Wcast-align",
+                "-Wlogical-op",
+                "-Wmissing-noreturn",
+                "-Wredundant-decls",
+                "-Winline",
+                "-Winvalid-pch",
+                "-Wmissing-include-dirs",
+                "-Winit-self",
                 "*.cpp",
                 "-I.", "-I${workspaceFolder}/third_party/stb"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "dependsOn": [
+                "format src"
+            ]
+        },
+        {
+            "label": "format src",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            },
+            "command": "sh ../format.sh",
+            "presentation": {
+                "echo": false,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
             }
         }
     ]
