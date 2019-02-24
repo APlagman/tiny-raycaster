@@ -1,7 +1,7 @@
+#include "player.h"
+
 #include <cassert>
 #include <utility>
-
-#include "player.h"
 
 Player::Player(Point2D<float> position, float angle, float fieldOfView) :
     mPosition(std::move(position)),

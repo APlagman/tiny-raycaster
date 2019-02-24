@@ -1,10 +1,10 @@
 #pragma once
 
+#include "dimension2D.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>
-
-#include "dimension2D.h"
 
 class FrameBuffer;
 struct RGBA;

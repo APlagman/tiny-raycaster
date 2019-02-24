@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstddef>
-
 #include "dimension2D.h"
 #include "point2D.h"
+
+#include <cstddef>
 
 class Map
 {

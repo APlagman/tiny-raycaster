@@ -1,6 +1,6 @@
-#include <utility>
-
 #include "sprite.h"
+
+#include <utility>
 
 Sprite::Sprite(Point2D<float> position, size_t textureID) :
     mPosition(std::move(position)),

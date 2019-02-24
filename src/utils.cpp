@@ -1,11 +1,11 @@
-#include <cassert>
-#include <fstream>
-#include <iostream>
-
 #include "utils.h"
 
 #include "framebuffer.h"
 #include "rgba.h"
+
+#include <cassert>
+#include <fstream>
+#include <iostream>
 
 uint32_t packColor(const RGBA& rgba)
 {

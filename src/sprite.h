@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstddef>
-
 #include "point2D.h"
+
+#include <cstddef>
 
 class Sprite
 {
