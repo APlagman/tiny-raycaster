@@ -27,3 +27,8 @@ void Sprite::setY(float value)
 {
     mPosition.y = value;
 }
+
+size_t Sprite::getID() const
+{
+    return mTextureID;
+}

@@ -13,6 +13,7 @@ public:
     void setX(float value);
     float getY() const;
     void setY(float value);
+    size_t getID() const;
 
 private:
     Point2D<float> mPosition;

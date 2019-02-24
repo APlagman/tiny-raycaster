@@ -32,6 +32,7 @@ void drawSpriteOnMap(const Sprite& sprite, FrameBuffer& fb, const Map& map)
 
 void drawSprite(const Sprite& sprite,
                 FrameBuffer& fb,
+                const std::vector<float>& depthBuffer,
                 const Player& player,
                 const TextureSet& spriteTextures)
 {
@@ -50,6 +51,7 @@ void drawSprite(const Sprite& sprite,
                   + std::pow(player.getY() - sprite.getY(), 2));
     const size_t spriteScreenHeight = static_cast<size_t>(
         std::min(1000, static_cast<int>(fb.getHeight() / distanceToSprite)));
+    const size_t spriteScreenWidth = spriteScreenHeight;
     const float percentAlongFOV =
         (spriteDirection - player.getAngle()) / player.getFieldOfView();
     const size_t halfOfViewWidth = (fb.getWidth() / 2) / 2;
@@ -61,18 +63,33 @@ void drawSprite(const Sprite& sprite,
         static_cast<int>(fb.getHeight() / 2 - spriteScreenHeight / 2)};
 
     for (size_t col = 0; col < spriteScreenHeight; ++col) {
-        const int x = topLeftOfTexture.x + static_cast<int>(col);
-        if (x < 0 || x >= static_cast<int>(fb.getWidth() / 2)) {
+        const int screen3DViewX = topLeftOfTexture.x + static_cast<int>(col);
+        if (screen3DViewX < 0
+            || screen3DViewX >= static_cast<int>(fb.getWidth() / 2)) {
             continue;
         }
+        if (depthBuffer[screen3DViewX] < distanceToSprite) {
+            continue; // Occluded
+        }
         for (size_t row = 0; row < spriteScreenHeight; ++row) {
-            const int y = topLeftOfTexture.y + static_cast<int>(row);
-            if (y < 0 || y >= static_cast<int>(fb.getHeight())) {
+            const int screen3DViewY =
+                topLeftOfTexture.y + static_cast<int>(row);
+            if (screen3DViewY < 0
+                || screen3DViewY >= static_cast<int>(fb.getHeight())) {
                 continue;
             }
-            fb.setPixel({fb.getWidth() / 2 + static_cast<size_t>(x),
-                         static_cast<size_t>(y)},
-                        packColor(RGBA::black()));
+            const Point2D<size_t> texturePixel = {
+                col * spriteTextures.getTextureWidth() / spriteScreenWidth,
+                row * spriteTextures.getTextureHeight() / spriteScreenHeight};
+            const uint32_t color =
+                spriteTextures.get(texturePixel, sprite.getID());
+            RGBA rgba = unpackColor(color);
+            if (rgba.a > 128) {
+                const Point2D<size_t> pixel = {
+                    fb.getWidth() / 2 + static_cast<size_t>(screen3DViewX),
+                    static_cast<size_t>(screen3DViewY)};
+                fb.setPixel(pixel, color);
+            }
         }
     }
 }
@@ -102,6 +119,7 @@ void render(FrameBuffer& fb,
         }
     }
 
+    std::vector<float> depthBuffer(fb.getWidth() / 2, 1e3);
     // Field of view sweep
     for (size_t i = 0; i < fb.getWidth() / 2; ++i) {
         const float angle = (player.getAngle() - (player.getFieldOfView() / 2))
@@ -132,9 +150,10 @@ void render(FrameBuffer& fb,
             const size_t textureID = map.get(nearestTileOnMap);
             assert(textureID < wallTextures.getCount());
 
-            const float dist = t * std::cos(angle - player.getAngle());
+            const float distance = t * std::cos(angle - player.getAngle());
+            depthBuffer[i] = distance;
             const auto columnHeight =
-                static_cast<size_t>(fb.getHeight() / dist);
+                static_cast<size_t>(fb.getHeight() / distance);
 
             // Find the fractional offset from the top left of the tile we hit
             const Point2D<float> mapTileOffset = {
@@ -176,7 +195,7 @@ void render(FrameBuffer& fb,
 
     for (const Sprite& sprite : sprites) {
         drawSpriteOnMap(sprite, fb, map);
-        drawSprite(sprite, fb, player, monsterTextures);
+        drawSprite(sprite, fb, depthBuffer, player, monsterTextures);
     }
 }
 
