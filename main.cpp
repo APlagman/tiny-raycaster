@@ -40,7 +40,7 @@ void render(FrameBuffer& fb, const Map& map, const Player& player, const Texture
 
             // Draw the ray
             const Point2D<size_t> nearest = { static_cast<size_t>(mapPos.x * tileSize.width), static_cast<size_t>(mapPos.y * tileSize.height) };
-            fb.setPixel(nearest, packColor({ 160, 160, 160 }));
+            fb.setPixel(nearest, packColor({ 160, 160, 160, 255 }));
 
             if (!map.isEmpty(mapPos)) {
                 // Draw the wall
@@ -70,7 +70,7 @@ void render(FrameBuffer& fb, const Map& map, const Player& player, const Texture
                 Point2D<size_t> pixel = { fb.getWidth() / 2 + i, 0 };
                 for (size_t y = 0; y < columnHeight; ++y) {
                     pixel.y = y + fb.getHeight() / 2 - columnHeight / 2;
-                    if (pixel.y >= 0 && pixel.y < fb.getHeight()) {
+                    if (pixel.y < fb.getHeight()) {
                         fb.setPixel(pixel, column[y]);
                     }
                 }

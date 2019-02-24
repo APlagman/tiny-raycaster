@@ -8,7 +8,14 @@
             "type": "shell",
             "command": "g++",
             "args": [
-                "-"
+                "-o raytrace",
+                "-g",
+                "-std=c++17",
+                "-Werror",
+                "-Wpedantic",
+                "-Wall",
+                "-Wextra",
+                "*.cpp"
             ],
             "group": {
                 "kind": "build",
