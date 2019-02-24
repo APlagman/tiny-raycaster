@@ -11,15 +11,17 @@
             },
             "command": "g++",
             "args": [
-                "-o ${workspaceFolder}/dist/raytrace",
+                "-o", "${workspaceFolder}/dist/raytrace",
                 "-g",
+                "-ggdb",
+                "-O0",
                 "-std=c++17",
                 "-Werror",
                 "-Wpedantic",
                 "-Wall",
                 "-Wextra",
                 "*.cpp",
-                "-I${workspaceFolder}/third_party/stb"
+                "-I.", "-I${workspaceFolder}/third_party/stb"
             ],
             "group": {
                 "kind": "build",
