@@ -112,7 +112,7 @@ int main()
 
     Map map;
 
-    TextureSet wallTextures("walltext.png");
+    TextureSet wallTextures("../content/walltext.png");
     if (wallTextures.getCount() == 0) {
         std::cerr << "Failed to load wall textures" << std::endl;
         return -1;

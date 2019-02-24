@@ -51,4 +51,5 @@ std::vector<uint32_t>::const_iterator FrameBuffer::begin() const
 
 std::vector<uint32_t>::const_iterator FrameBuffer::end() const
 {
+    return mImage.end();
 }
